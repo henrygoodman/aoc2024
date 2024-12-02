@@ -26,69 +26,43 @@ func Day01() {
 }
 
 func solvePart1(input []string) int {
-	// Approach:
-	// - parse into L/R list
-	// - sort each L/R list
-	// - zip result and compute abs, sum all diffs
-
-	// Parse
-	var left, right []int
-	for _, line := range input {
+	pairs := common.Map(input, func(line string) common.Pair {
 		parts := strings.Fields(line)
+		leftNum, _ := strconv.Atoi(parts[0])
+		rightNum, _ := strconv.Atoi(parts[1])
+		return common.Pair{First: leftNum, Second: rightNum}
+	})
 
-		leftNum, err1 := strconv.Atoi(parts[0])
-		rightNum, err2 := strconv.Atoi(parts[1])
-		if err1 != nil || err2 != nil {
-			fmt.Printf("Error parsing numbers in line: %q\n", line)
-			continue
-		}
+	left := common.Map(pairs, func(pair common.Pair) int { return pair.First })
+	right := common.Map(pairs, func(pair common.Pair) int { return pair.Second })
 
-		left = append(left, leftNum)
-		right = append(right, rightNum)
-	}
-
-	// Sort
 	sort.Ints(left)
 	sort.Ints(right)
 
-	// Zip and compute diffs
-	cumulativeSum := 0
-	for i := 0; i < len(left); i++ {
-		absDiff := int(math.Abs(float64(left[i] - right[i])))
-		cumulativeSum += absDiff
-	}
-
-	return cumulativeSum
+	return common.Reduce(common.Zip(left, right), func(acc int, pair common.Pair) int {
+		return acc + int(math.Abs(float64(pair.First-pair.Second)))
+	}, 0)
 }
 
 func solvePart2(input []string) int {
-	// Approach
-	// - parse into L/R list (no need to sort)
-	// - add R list to freq counter (hashmap) during parsing
-	// - return mapping using L as key * map[L]
-	
-	freq := make(map[int]int)
+	type Accumulator struct {
+		Left []int
+		Freq map[int]int
+	}
 
-	// Parse
-	var left []int
-	for _, line := range input {
+	parsed := common.Reduce(input, func(acc Accumulator, line string) Accumulator {
 		parts := strings.Fields(line)
+		leftNum, _ := strconv.Atoi(parts[0])
+		rightNum, _ := strconv.Atoi(parts[1])
+		acc.Left = append(acc.Left, leftNum)
+		acc.Freq[rightNum]++
+		return acc
+	}, Accumulator{
+		Left: []int{},
+		Freq: make(map[int]int),
+	})
 
-		leftNum, err1 := strconv.Atoi(parts[0])
-		rightNum, err2 := strconv.Atoi(parts[1])
-		if err1 != nil || err2 != nil {
-			fmt.Printf("Error parsing numbers in line: %q\n", line)
-			continue
-		}
-
-		left = append(left, leftNum)
-		freq[rightNum]++
-	}
-
-	result := 0
-	for _, l := range left {
-		result += l * freq[l]
-	}
-
-	return result
+	return common.Reduce(parsed.Left, func(acc int, l int) int {
+		return acc + l*parsed.Freq[l]
+	}, 0)
 }
