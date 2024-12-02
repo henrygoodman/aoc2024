@@ -1,7 +1,8 @@
 package main
 
 import (
-	"aoc2024/days"
+	"aoc2024/days/day01"
+	"aoc2024/days/day02"
 	"fmt"
 	"os"
 	"strconv"
@@ -24,7 +25,9 @@ func main() {
 
 	switch day {
 	case 1:
-		days.Day01()
+		day01.Solve()
+	case 2:
+		day02.Solve()
 	default:
 		fmt.Printf("Day %d not implemented yet\n", day)
 	}

@@ -1,4 +1,4 @@
-package days
+package day01
 
 import (
 	"aoc2024/common"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Day01() {
+func Solve() {
 	input, err := common.ReadInput(1)
 	if err != nil {
 		fmt.Println("Error reading input:", err)

@@ -31,6 +31,28 @@ func Reduce[T any, U any](slice []T, reducer func(U, T) U, initial U) U {
 	return result
 }
 
+func Sign(x int) int {
+    if x > 0 {
+        return 1
+    } else if x < 0 {
+        return -1
+    }
+    return 0
+}
+
+func Window[T any](data []T, size int) [][]T {
+	if size <= 0 || size > len(data) {
+		return nil
+	}
+
+	result := make([][]T, 0, len(data)-size+1)
+	for i := 0; i <= len(data)-size; i++ {
+		result = append(result, data[i:i+size])
+	}
+
+	return result
+}
+
 func Zip(a, b []int) []Pair {
 	n := len(a)
 	if len(b) < n {
