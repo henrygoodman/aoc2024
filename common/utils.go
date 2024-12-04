@@ -1,8 +1,7 @@
 package common
 
 type Pair struct {
-    First  int
-    Second int
+    First, Second int
 }
 
 func Map[T any, U any](slice []T, fn func(T) U) []U {
