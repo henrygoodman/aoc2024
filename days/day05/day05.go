@@ -12,19 +12,19 @@ import (
 )
 
 func Solve() {
-	input, err := common.ReadInput(5)
-	if err != nil {
-		fmt.Println("Error reading input:", err)
-		return
-	}
+    input, err := common.ReadInput(5)
+    if err != nil {
+        fmt.Println("Error reading input:", err)
+        return
+    }
 
-	common.Time("Part 1", func() {
-		fmt.Println("Part 1 Answer:", solvePart1(input))
-	})
+    common.Time("Part 1", func() {
+        fmt.Println("Part 1 Answer:", solvePart1(input))
+    })
 
-	common.Time("Part 2", func() {
-		fmt.Println("Part 2 Answer:", solvePart2(input))
-	})
+    common.Time("Part 2", func() {
+        fmt.Println("Part 2 Answer:", solvePart2(input))
+    })
 }
 
 type PriorPost struct {
@@ -86,7 +86,7 @@ func solvePart1(input []string) int {
 	var sum int64
 	var workers = runtime.NumCPU()
 
-	lines := make(chan string, len(input)) 
+	lines := make(chan string, len(input))
 	var wg sync.WaitGroup
 
 	worker := func() {
@@ -101,37 +101,16 @@ func solvePart1(input []string) int {
 				continue
 			}
 
-			isValid := true
-			for i, curr := range nums {
-				left := nums[:i]
-				right := nums[i+1:]
-
-				entry, exists := m[curr]
-				if !exists {
-					isValid = false
-					break
-				}
-
-				for _, num := range left {
-					if _, exists := entry.PriorSet[num]; !exists {
-						isValid = false
-						break
-					}
-				}
-
-				for _, num := range right {
-					if _, exists := entry.PostSet[num]; !exists {
-						isValid = false
-						break
-					}
-				}
-
-				if !isValid {
+			isSorted := true
+			for i := 1; i < len(nums); i++ {
+				a, b := nums[i-1], nums[i]
+				if _, exists := m[b].PriorSet[a]; !exists {
+					isSorted = false
 					break
 				}
 			}
 
-			if isValid {
+			if isSorted {
 				midIdx := len(nums) / 2
 				atomic.AddInt64(&sum, int64(nums[midIdx]))
 			}
@@ -173,21 +152,27 @@ func solvePart2(input []string) int {
 				continue
 			}
 
-			modified := false
-			sort.SliceStable(nums, func(i, j int) bool {
-				a, b := nums[i], nums[j]
-				if _, exists := m[b].PriorSet[a]; exists {
-					modified = true
-					return true
+			isSorted := true
+			for i := 1; i < len(nums); i++ {
+				a, b := nums[i-1], nums[i]
+				if _, exists := m[b].PriorSet[a]; !exists {
+					isSorted = false
+					break
 				}
-				if _, exists := m[b].PostSet[a]; exists {
-					modified = true
-					return false
-				}
-				return false
-			})
+			}
 
-			if modified {
+			if !isSorted {
+				sort.SliceStable(nums, func(i, j int) bool {
+					a, b := nums[i], nums[j]
+					if _, exists := m[b].PriorSet[a]; exists {
+						return true
+					}
+					if _, exists := m[b].PostSet[a]; exists {
+						return false
+					}
+					return false
+				})
+
 				midIdx := len(nums) / 2
 				atomic.AddInt64(&sum, int64(nums[midIdx]))
 			}
@@ -208,4 +193,3 @@ func solvePart2(input []string) int {
 
 	return int(sum)
 }
-
