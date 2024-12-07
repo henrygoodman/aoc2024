@@ -3,6 +3,7 @@ package day05
 import (
 	"aoc2024/common"
 	"fmt"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -83,7 +84,7 @@ func buildMapping(input []string) map[int]PriorPost {
 func solvePart1(input []string) int {
 	m := buildMapping(input)
 	var sum int64
-	const workers = 16
+	var workers = runtime.NumCPU()
 
 	lines := make(chan string, len(input)) 
 	var wg sync.WaitGroup
@@ -155,7 +156,7 @@ func solvePart1(input []string) int {
 func solvePart2(input []string) int {
 	m := buildMapping(input)
 	var sum int64
-	const workers = 16
+	var workers = runtime.NumCPU()
 
 	lines := make(chan string, len(input))
 	var wg sync.WaitGroup
@@ -172,30 +173,23 @@ func solvePart2(input []string) int {
 				continue
 			}
 
-			sorted := make([]int, len(nums))
-			copy(sorted, nums)
-			sort.Slice(sorted, func(i, j int) bool {
-				a, b := sorted[i], sorted[j]
+			modified := false
+			sort.SliceStable(nums, func(i, j int) bool {
+				a, b := nums[i], nums[j]
 				if _, exists := m[b].PriorSet[a]; exists {
+					modified = true
 					return true
 				}
 				if _, exists := m[b].PostSet[a]; exists {
+					modified = true
 					return false
 				}
 				return false
 			})
 
-			isSorted := true
-			for i := range nums {
-				if nums[i] != sorted[i] {
-					isSorted = false
-					break
-				}
-			}
-
-			if !isSorted {
-				midIdx := len(sorted) / 2
-				atomic.AddInt64(&sum, int64(sorted[midIdx]))
+			if modified {
+				midIdx := len(nums) / 2
+				atomic.AddInt64(&sum, int64(nums[midIdx]))
 			}
 		}
 	}
@@ -214,3 +208,4 @@ func solvePart2(input []string) int {
 
 	return int(sum)
 }
+
