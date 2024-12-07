@@ -51,7 +51,6 @@ func solvePart2(input []string) int {
     for _, line := range input {
         matches := combinedRe.FindAllStringSubmatch(line, -1)
         for _, match := range matches {
-			fmt.Println(match)
             if match[1] != "" && match[2] != "" {
                 if multiplicationEnabled {
                     x, _ := strconv.Atoi(match[1])
