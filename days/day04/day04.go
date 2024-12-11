@@ -16,7 +16,7 @@ func Solve() {
 		return
 	}
 
-	grid := parseGrid(input)
+	grid := common.ParseGrid(input)
 
 	common.Time("Part 1", func() {
 		fmt.Println("Part 1 Answer:", solvePart1(grid))
@@ -25,14 +25,6 @@ func Solve() {
 	common.Time("Part 2", func() {
 		fmt.Println("Part 2 Answer:", solvePart2(grid))
 	})
-}
-
-func parseGrid(input []string) [][]rune {
-	grid := make([][]rune, len(input))
-	for i, line := range input {
-		grid[i] = []rune(line)
-	}
-	return grid
 }
 
 var directions = []Coordinate{

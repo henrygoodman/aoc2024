@@ -15,7 +15,7 @@ func Solve() {
 		return
 	}
 
-	grid := parseGrid(input)
+	grid := common.ParseGrid(input)
 
 	common.Time("Part 1", func() {
 		fmt.Println("Part 1 Answer:", solvePart1(grid))
@@ -38,13 +38,6 @@ var directions = []Coordinate{
 	{-1, 0},
 }
 
-func parseGrid(input []string) [][]rune {
-	grid := make([][]rune, len(input))
-	for i, line := range input {
-		grid[i] = []rune(line)
-	}
-	return grid
-}
 
 func isValidPosition(grid [][]rune, position Coordinate) bool {
 	return position.y >= 0 && position.y < len(grid) && position.x >= 0 && position.x < len(grid[0])

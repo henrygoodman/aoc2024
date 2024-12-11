@@ -54,6 +54,33 @@ func Window[T any](data []T, size int) [][]T {
 	return result
 }
 
+func CircularWindow[T any](data []T, size int) [][]T {
+    if size <= 0 || size > len(data) {
+        return nil
+    }
+
+    result := make([][]T, 0, len(data))
+    for i := 0; i < len(data); i++ {
+        window := make([]T, size)
+        for j := 0; j < size; j++ {
+            window[j] = data[(i+j)%len(data)]
+        }
+        result = append(result, window)
+    }
+
+    return result
+}
+
+func AllPairs[T any](items []T) [][2]T {
+    var pairs [][2]T
+    for i := 0; i < len(items); i++ {
+        for j := i + 1; j < len(items); j++ {
+            pairs = append(pairs, [2]T{items[i], items[j]})
+        }
+    }
+    return pairs
+}
+
 func Zip(a, b []int) []Pair {
 	n := len(a)
 	if len(b) < n {
@@ -64,4 +91,12 @@ func Zip(a, b []int) []Pair {
 		result[i] = Pair{First: a[i], Second: b[i]}
 	}
 	return result
+}
+
+func ParseGrid(input []string) [][]rune {
+	grid := make([][]rune, len(input))
+	for i, line := range input {
+		grid[i] = []rune(line)
+	}
+	return grid
 }
