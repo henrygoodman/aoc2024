@@ -148,52 +148,69 @@ func findStart(grid [][]rune) Coordinate {
 }
 
 func generatePath(grid [][]rune, start Coordinate) []Coordinate {
-    currDirection := directions[3]
-    curr := start
+	currDirection := directions[3]
+	curr := start
 
-    visited := make(map[Coordinate]struct{})
-    var path []Coordinate
+	rows := len(grid)
+	cols := len(grid[0])
+	visited := make([]bool, rows*cols)
+	var path []Coordinate
 
-    for {
-        if _, seen := visited[curr]; !seen {
-            visited[curr] = struct{}{}
-            path = append(path, curr)
-        }
+	getIndex := func(coord Coordinate) int {
+		return coord.y*cols + coord.x
+	}
 
-        next := Coordinate{curr.y + currDirection.y, curr.x + currDirection.x}
+	for {
+		index := getIndex(curr)
+		if !visited[index] {
+			visited[index] = true
+			path = append(path, curr)
+		}
 
-        if !isValidPosition(grid, next) {
-            break
-        }
+		next := Coordinate{curr.y + currDirection.y, curr.x + currDirection.x}
 
-        if grid[next.y][next.x] == '#' {
-            currDirection = getNextDirection(currDirection)
-        } else {
-            curr = next
-        }
+		if !isValidPosition(grid, next) {
+			break
+		}
 
-        if curr == start && currDirection == directions[3] {
-            break
-        }
-    }
+		if grid[next.y][next.x] == '#' {
+			currDirection = getNextDirection(currDirection)
+		} else {
+			curr = next
+		}
 
-    return path
+		if curr == start && currDirection == directions[3] {
+			break
+		}
+	}
+
+	return path
 }
 
 func createsLoop(grid [][]rune) bool {
-
 	start := findStart(grid)
 	curr := start
 	currDirection := directions[3]
-	visited := make(map[string]bool)
+
+	rows := len(grid)
+	cols := len(grid[0])
+	visitCount := make([]int, rows*cols)
+
+	getIndex := func(coord Coordinate) int {
+		return coord.y*cols + coord.x
+	}
 
 	for {
-		state := fmt.Sprintf("%d,%d,%d,%d", curr.y, curr.x, currDirection.y, currDirection.x)
+		if !isValidPosition(grid, curr) {
+			return false
+		}
 
-		if visited[state] {
+		index := getIndex(curr)
+
+		visitCount[index]++
+		if visitCount[index] > 4 {
 			return true
 		}
-		visited[state] = true
 
 		next := Coordinate{curr.y + currDirection.y, curr.x + currDirection.x}
 
@@ -208,6 +225,7 @@ func createsLoop(grid [][]rune) bool {
 		}
 	}
 }
+
 
 func copyGrid(grid [][]rune) [][]rune {
 	copy := make([][]rune, len(grid))
