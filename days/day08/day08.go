@@ -100,26 +100,25 @@ func findCollinearPoints(first Coordinate, second Coordinate, grid [][]rune) []C
     stepX := deltaX / gcdValue
 
     var points []Coordinate
-    for _, start := range []Coordinate{first, second} {
-        // Forward direction
-        for i := 0; ; i++ {
-            y := start.y + i*stepY
-            x := start.x + i*stepX
-            if !isValidPosition(grid, Coordinate{y, x}) {
-                break
-            }
-            points = append(points, Coordinate{y, x})
-        }
 
-        // Backward direction
-        for i := -1; ; i-- {
-            y := start.y + i*stepY
-            x := start.x + i*stepX
-            if !isValidPosition(grid, Coordinate{y, x}) {
-                break
-            }
-            points = append(points, Coordinate{y, x})
+    // Step in both directions from the first point
+    for i := 0; ; i++ {
+        y := first.y + i*stepY
+        x := first.x + i*stepX
+        if !isValidPosition(grid, Coordinate{y, x}) {
+            break
         }
+        points = append(points, Coordinate{y, x})
+    }
+
+    // Step backward from the first point
+    for i := -1; ; i-- {
+        y := first.y + i*stepY
+        x := first.x + i*stepX
+        if !isValidPosition(grid, Coordinate{y, x}) {
+            break
+        }
+        points = append(points, Coordinate{y, x})
     }
 
     return points
