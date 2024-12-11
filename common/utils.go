@@ -46,7 +46,9 @@ func Window[T any](data []T, size int) [][]T {
 
 	result := make([][]T, 0, len(data)-size+1)
 	for i := 0; i <= len(data)-size; i++ {
-		result = append(result, data[i:i+size])
+		windowCopy := make([]T, size)
+		copy(windowCopy, data[i:i+size])
+		result = append(result, windowCopy)
 	}
 
 	return result
