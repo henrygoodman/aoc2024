@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func Solve() {
@@ -22,10 +23,6 @@ func Solve() {
 		fmt.Println("Part 2 Answer:", solvePart2(input))
 	})
 }
-
-
-var stoneIndex = make(map[string]int)
-var nextIndex int
 
 /* Observations:
 - Can we define a function f(x, i) that returns length of input after i iterations 
@@ -46,22 +43,34 @@ Optimizations:
 - Array for cache instead of hashmap overhead
 
 */
-func processStone(stone string, iterations int, cache []int, maxIterations int) int {
+
+var stoneIndex = make(map[string]int)
+var nextIndex int
+var stoneIndexMutex sync.Mutex
+
+func processStone(stone string, iterations int, cache []int, maxIterations int, cacheMutex *sync.Mutex) int {
 	if iterations == 0 {
 		return 1
 	}
 
+	stoneIndexMutex.Lock()
 	idx, exists := stoneIndex[stone]
 	if !exists {
 		idx = nextIndex
 		stoneIndex[stone] = idx
 		nextIndex++
 	}
+	stoneIndexMutex.Unlock()
 
 	flatIndex := idx*(maxIterations+1) + iterations
+
+	cacheMutex.Lock()
 	if cache[flatIndex] != -1 {
-		return cache[flatIndex]
+		result := cache[flatIndex]
+		cacheMutex.Unlock()
+		return result
 	}
+	cacheMutex.Unlock()
 
 	var nextStones []string
 	if stone == "0" {
@@ -85,13 +94,15 @@ func processStone(stone string, iterations int, cache []int, maxIterations int) 
 
 	totalCount := 0
 	for _, next := range nextStones {
-		totalCount += processStone(next, iterations-1, cache, maxIterations)
+		totalCount += processStone(next, iterations-1, cache, maxIterations, cacheMutex)
 	}
 
+	cacheMutex.Lock()
 	cache[flatIndex] = totalCount
+	cacheMutex.Unlock()
+
 	return totalCount
 }
-
 
 func solvePart1(input []string) int {
 	if len(input) != 1 {
@@ -106,11 +117,23 @@ func solvePart1(input []string) int {
 		cache[i] = -1
 	}
 
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var cacheMutex sync.Mutex
 	total := 0
+
 	for _, stone := range stones {
-		total += processStone(stone, 25, cache, 25)
+		wg.Add(1)
+		go func(s string) {
+			defer wg.Done()
+			count := processStone(s, 25, cache, 25, &cacheMutex)
+			mu.Lock()
+			total += count
+			mu.Unlock()
+		}(stone)
 	}
 
+	wg.Wait()
 	return total
 }
 
@@ -121,16 +144,28 @@ func solvePart2(input []string) int {
 	}
 
 	stones := strings.Fields(input[0])
-	cacheSize := 5000 * 75
+	cacheSize := 5000 * 76
 	cache := make([]int, cacheSize)
 	for i := range cache {
 		cache[i] = -1
 	}
 
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var cacheMutex sync.Mutex
 	total := 0
+
 	for _, stone := range stones {
-		total += processStone(stone, 75, cache, 75)
+		wg.Add(1)
+		go func(s string) {
+			defer wg.Done()
+			count := processStone(s, 75, cache, 75, &cacheMutex)
+			mu.Lock()
+			total += count
+			mu.Unlock()
+		}(stone)
 	}
 
+	wg.Wait()
 	return total
 }
