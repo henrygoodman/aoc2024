@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 func Solve() {
@@ -24,54 +25,50 @@ func Solve() {
 	})
 }
 
-/* Observations:
-- Can we define a function f(x, i) that returns length of input after i iterations 
-- 0 -> 1 -> 2024 -> 20, 24 -> 2,0,2,4
-- If we multiply by 2024, its not enough to know the length, as we would need to process after?
+var stoneIndex sync.Map // Concurrent-safe map
+var globalIndex int32 // Global counter for stone indices
 
-- We see a lot of powers of 2, why?
-- 0 -> 1 -> 2024 eventually breaks down to 2,0,2,4 (all powers of 2)
+func getStoneIndex(stone string) int {
+	// Try to load the index from the concurrent map
+	idx, exists := stoneIndex.Load(stone)
+	if exists {
+		return idx.(int)
+	}
 
-Do we need an iterative approach? Or can we cache by storing the number of stones for X after Y operations?
-e.g. f(125, 1) = 1
-f(125, 2) = 2
+	// Generate a new index atomically
+	newIdx := int(atomic.AddInt32(&globalIndex, 1)) - 1
+	stoneIndex.Store(stone, newIdx)
+	return newIdx
+}
 
-This requires we 'know' which numbers come from what number?
-Use cache to memoize stone at particular iteration
-
-Optimizations:
-- Array for cache instead of hashmap overhead
-
-*/
-
-var stoneIndex = make(map[string]int)
-var nextIndex int
-var stoneIndexMutex sync.Mutex
-
-func processStone(stone string, iterations int, cache []int, maxIterations int, cacheMutex *sync.Mutex) int {
+func processStone(stone string, iterations int, cache []int32, inProgress []int32, maxIterations int) int {
 	if iterations == 0 {
 		return 1
 	}
 
-	stoneIndexMutex.Lock()
-	idx, exists := stoneIndex[stone]
-	if !exists {
-		idx = nextIndex
-		stoneIndex[stone] = idx
-		nextIndex++
-	}
-	stoneIndexMutex.Unlock()
-
+	idx := getStoneIndex(stone)
 	flatIndex := idx*(maxIterations+1) + iterations
 
-	cacheMutex.Lock()
-	if cache[flatIndex] != -1 {
-		result := cache[flatIndex]
-		cacheMutex.Unlock()
-		return result
-	}
-	cacheMutex.Unlock()
+	// Check cache
+	for {
+		val := atomic.LoadInt32(&cache[flatIndex])
+		if val != -1 {
+			return int(val) // Value is already cached
+		}
 
+		// Try to mark "in progress"
+		if atomic.CompareAndSwapInt32(&inProgress[flatIndex], 0, 1) {
+			// This thread will compute the value
+			break
+		}
+
+		// Wait for the result if another thread is computing
+		for atomic.LoadInt32(&inProgress[flatIndex]) == 1 {
+			// Spin-wait; could add backoff to reduce CPU usage
+		}
+	}
+
+	// Compute the value
 	var nextStones []string
 	if stone == "0" {
 		nextStones = append(nextStones, "1")
@@ -83,89 +80,61 @@ func processStone(stone string, iterations int, cache []int, maxIterations int, 
 		}
 		nextStones = append(nextStones, l, r)
 	} else {
-		intStone, err := strconv.Atoi(stone)
-		if err != nil {
-			fmt.Println("Error converting stone to int:", err)
-			return 0
-		}
-		newStone := strconv.Itoa(intStone * 2024)
-		nextStones = append(nextStones, newStone)
+		intStone, _ := strconv.Atoi(stone)
+		nextStones = append(nextStones, strconv.Itoa(intStone*2024))
 	}
 
 	totalCount := 0
 	for _, next := range nextStones {
-		totalCount += processStone(next, iterations-1, cache, maxIterations, cacheMutex)
+		totalCount += processStone(next, iterations-1, cache, inProgress, maxIterations)
 	}
 
-	cacheMutex.Lock()
-	cache[flatIndex] = totalCount
-	cacheMutex.Unlock()
+	// Store the result and mark "not in progress"
+	atomic.StoreInt32(&cache[flatIndex], int32(totalCount))
+	atomic.StoreInt32(&inProgress[flatIndex], 0)
 
 	return totalCount
 }
 
-func solvePart1(input []string) int {
+
+func solve(input []string, maxIterations int) int {
 	if len(input) != 1 {
 		fmt.Println("Input must be 1 line")
 		return -1
 	}
 
 	stones := strings.Fields(input[0])
-	cacheSize := 5000 * 26
-	cache := make([]int, cacheSize)
+
+	// Dynamically estimate cache size (10x buffer for safety)
+	cacheSize := len(stones) * 1000 * (maxIterations + 1)
+	cache := make([]int32, cacheSize)      // Use int32 for atomic operations
+	inProgress := make([]int32, cacheSize) // Track computation in progress
+
 	for i := range cache {
 		cache[i] = -1
 	}
 
 	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var cacheMutex sync.Mutex
-	total := 0
+	var total int64 // Atomic total summation
 
 	for _, stone := range stones {
 		wg.Add(1)
 		go func(s string) {
 			defer wg.Done()
-			count := processStone(s, 25, cache, 25, &cacheMutex)
-			mu.Lock()
-			total += count
-			mu.Unlock()
+			count := processStone(s, maxIterations, cache, inProgress, maxIterations)
+			atomic.AddInt64(&total, int64(count))
 		}(stone)
 	}
 
 	wg.Wait()
-	return total
+	return int(total)
+}
+
+
+func solvePart1(input []string) int {
+	return solve(input, 25)
 }
 
 func solvePart2(input []string) int {
-	if len(input) != 1 {
-		fmt.Println("Input must be 1 line")
-		return -1
-	}
-
-	stones := strings.Fields(input[0])
-	cacheSize := 5000 * 76
-	cache := make([]int, cacheSize)
-	for i := range cache {
-		cache[i] = -1
-	}
-
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var cacheMutex sync.Mutex
-	total := 0
-
-	for _, stone := range stones {
-		wg.Add(1)
-		go func(s string) {
-			defer wg.Done()
-			count := processStone(s, 75, cache, 75, &cacheMutex)
-			mu.Lock()
-			total += count
-			mu.Unlock()
-		}(stone)
-	}
-
-	wg.Wait()
-	return total
+	return solve(input, 75)
 }
