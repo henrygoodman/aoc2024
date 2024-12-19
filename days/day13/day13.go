@@ -15,12 +15,14 @@ func Solve() {
 		return
 	}
 
+	machines := parseInput(input)
+
 	common.Time("Part 1", func() {
-		fmt.Println("Part 1 Answer:", solvePart1(input))
+		fmt.Println("Part 1 Answer:", solvePart1(machines))
 	})
 
 	common.Time("Part 2", func() {
-		fmt.Println("Part 2 Answer:", solvePart2(input))
+		fmt.Println("Part 2 Answer:", solvePart2(machines))
 	})
 }
 
@@ -51,8 +53,9 @@ type machine struct {
 	prizeX, prizeY int
 }
 
-func solvePart1(input []string) int {
-	machines := parseInput(input)
+
+func solvePart1(machines []machine) int {
+
 	totalTokens := 0
 	prizesWon := 0
 
@@ -67,8 +70,7 @@ func solvePart1(input []string) int {
 	return totalTokens
 }
 
-func solvePart2(input []string) int {
-	machines := parseInput(input)
+func solvePart2(machines []machine) int {
 	totalTokens := 0
 	prizesWon := 0
 
