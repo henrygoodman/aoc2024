@@ -1,5 +1,7 @@
 package common
 
+import "fmt"
+
 type Pair struct {
     First, Second int
 }
@@ -99,4 +101,13 @@ func ParseGrid(input []string) [][]rune {
 		grid[i] = []rune(line)
 	}
 	return grid
+}
+
+func DisplayGrid(grid [][]rune) {
+    for _, row := range grid {
+        for _, cell := range row {
+            fmt.Print(string(cell), " ")
+        }
+        fmt.Println()
+    }
 }
