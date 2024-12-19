@@ -246,6 +246,7 @@ func solvePart1(grid [][]rune) int {
 	return total
 }
 
+
 func solvePart2(grid [][]rune) int {
 	expandedGrid := expandGrid(grid)
 	rows := len(expandedGrid)
