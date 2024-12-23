@@ -121,15 +121,13 @@ func solvePart1(input []Robot, gridSize Coordinate) int {
 	return ret
 }
 
-
 func solvePart2(input []Robot, gridSize Coordinate) int {
-	maxIterations := 1000000 // Maximum number of iterations to check
+	maxIterations := 101 * 103 // Maximum number of iterations to check
+	lowestRating := SafetyRating{iteration: -1, rating: int(^uint(0) >> 1)}
 
 	for iterations := 0; iterations < maxIterations; iterations++ {
-		// Initialize quadrant counts
 		quadrantCount := make([]int, 4)
 
-		// Update robot positions and calculate quadrant counts
 		for _, robot := range input {
 			pos := findRobotPosition(robot, gridSize, iterations)
 			quadrant := getQuadrant(pos, gridSize)
@@ -138,41 +136,24 @@ func solvePart2(input []Robot, gridSize Coordinate) int {
 			}
 		}
 
-		// Check if quadrants 2 and 3 are empty
-		if quadrantCount[2] < 2 || quadrantCount[3] < 2 {
-			fmt.Printf("Potential Christmas tree pattern detected at iteration %d:\n", iterations)
-			displayGrid(input, gridSize, iterations) // Display the grid for visualization
-			return iterations
+		rating := 1
+		for _, count := range quadrantCount {
+			if count > 0 {
+				rating *= count
+			}
+		}
+
+		if rating < lowestRating.rating {
+			lowestRating = SafetyRating{iteration: iterations, rating: rating}
 		}
 	}
 
-	fmt.Println("No Christmas tree pattern detected within the maximum iterations.")
-	return -1 // Return -1 if no pattern is found
+	return lowestRating.iteration
 }
 
 
-func displayGrid(input []Robot, gridSize Coordinate, iterations int) {
-	// Initialize the grid
-	grid := make([][]rune, gridSize.y)
-	for i := range grid {
-		grid[i] = make([]rune, gridSize.x)
-		for j := range grid[i] {
-			grid[i][j] = '.' // '.' represents an empty space
-		}
-	}
-
-	// Update the grid with robot positions
-	for _, robot := range input {
-		pos := findRobotPosition(robot, gridSize, iterations)
-		grid[pos.y][pos.x] = '#' // '#' represents a robot
-	}
-
-	// Print the grid row by row
-	fmt.Println("Grid:")
-	for _, row := range grid {
-		for _, cell := range row {
-			fmt.Printf("%c ", cell) // Print each cell with a space
-		}
-		fmt.Println() // New line after each row
-	}
+type SafetyRating struct {
+	iteration int
+	rating    int
 }
+
