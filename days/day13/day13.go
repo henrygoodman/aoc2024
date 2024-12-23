@@ -80,7 +80,6 @@ func solvePart2(machines []machine) int {
 		prizeX := m.prizeX + offset
 		prizeY := m.prizeY + offset
 
-
 		tokens, solvable := solveLinearCombination(m.ax, m.ay, m.bx, m.by, prizeX, prizeY)
 		if solvable {
 			totalTokens += tokens
