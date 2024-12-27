@@ -261,25 +261,14 @@ func canPushVerticalCone(grid [][]rune, startY, startX, dy int) bool {
     height := len(grid)
     width := len(grid[0])
 
-    visited := make(map[Coordinate]bool)
-
     var check func(y, x int) bool
     check = func(y, x int) bool {
-        if y < 0 || y >= height || x < 0 || x+1 >= width {
-            return false // Out of bounds
-        }
         if grid[y][x] == '#' || grid[y][x+1] == '#' {
             return false // Wall blocks movement
         }
         if grid[y][x] != '[' || grid[y][x+1] != ']' {
             return true // Not a box, space is valid
         }
-
-        coord := Coordinate{x: x, y: y}
-        if visited[coord] {
-            return true
-        }
-        visited[coord] = true
 
         // Check the space in the direction of movement
         nextY := y + dy
@@ -384,13 +373,13 @@ func moveVerticalCone(grid [][]rune, startY, startX, dy, dx int) {
 	// Collect all affected positions starting from the initial box
 	collectPositions(startY, startX)
 
-	// First pass: Clear all current positions
+	// Clear all current positions
 	for _, pos := range positions {
 		grid[pos.y][pos.x] = '.'
 		grid[pos.y][pos.x+1] = '.'
 	}
 
-	// Second pass: Move all boxes to their new positions
+	// Move all boxes to their new positions
 	for _, pos := range positions {
 		newY, newX := pos.y+dy, pos.x+dx
 		if newY >= 0 && newY < height && newX >= 0 && newX+1 < width {
