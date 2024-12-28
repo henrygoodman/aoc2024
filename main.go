@@ -17,6 +17,7 @@ import (
 	"aoc2024/days/day14"
 	"aoc2024/days/day15"
 	"aoc2024/days/day16"
+	"aoc2024/days/day17"
 	"fmt"
 	"os"
 	"strconv"
@@ -70,6 +71,8 @@ func main() {
 		day15.Solve()
 	case 16:
 		day16.Solve()
+	case 17:
+		day17.Solve()
 	default:
 		fmt.Printf("Day %d not implemented yet\n", day)
 	}

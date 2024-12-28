@@ -115,6 +115,7 @@ func solvePart2(grid [][]rune) int {
 	return len(findAllBestPathTiles(grid, start, end))
 }
 
+// Same as part 1, just keep track of the current path (using a bool map of flattened coords since state is not important)
 func findAllBestPathTiles(grid [][]rune, start, end [2]int) map[int]bool {
 	height, width := len(grid), len(grid[0])
 	minCost := make([][][]int, height)
