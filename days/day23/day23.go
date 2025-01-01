@@ -104,6 +104,7 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
+// TODO: Implement, find maximal clique using Bron-Kerbosch algorithm
 func solvePart2(input []string) int {
 	return 5
 }
